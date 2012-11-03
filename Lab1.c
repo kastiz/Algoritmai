@@ -18,7 +18,7 @@
 
 //*******************
 
-#define	LIST	1	// 0 - no list(array); 1 - yes;
+#define	LIST	0	// 0 - no list(array); 1 - yes;
 #define	MODE	1
 /* mode tipai
 	1 merge		|
@@ -47,10 +47,14 @@ const int	n = 50,
 				//1600, 
 				//3200, 
 				//6400, 
-				//128000, 
-				//256000, 
-				//512000, 
-				//1024000,
+				//12800,
+				//25600,
+				//51200,
+				//102400,
+				//204800,
+				//409600,
+				//819200,
+				//ir nereikia
 				
 			/* galutinis rezis */
 			z = 1000000;
@@ -86,16 +90,14 @@ void write_to_file (int number, int *W, char *fname);
  **/
 void generate (int number, int upto, int *A, char *fname)
 {
-	
 	int v;
 	srand(time(NULL));
 	for (int i = 0; i < number; i++) {
-	A[i] = v = rand () % upto;
+		A[i] = v = rand() % upto;
 	//A[i] = v;// - upto * (v / upto);
 	//printf ("Random number: %d\n", v);
 	
 	//srand(time(NULL));
-	//v = rand() % upto;
 	//printf ("This compiler can generate random numbers from 0 to %d\n", RAND_MAX);
 	}
 	write_to_file (number, A, fname);
@@ -109,11 +111,21 @@ void generate (int number, int upto, int *A, char *fname)
  **/
 void write_to_file (int number, int *W, char *fname)
 {
-	
 	FILE *fw = fopen(fname, "wb");
 	for (int i = 0; i < number; i++) {
 		fwrite(&W[i],sizeof(int),1,fw);
 	} 
+	fclose(fw);
+}
+
+void write_to_file2 (char *fname, char *name, int n, long t, int o)
+{
+	
+	FILE *fw = fopen(fname, "a+");
+	//for (int i = 0; i < number; i++) {
+		//fwrite(&W[i],sizeof(int),1,fw);
+		fprintf(fw, "%s\t%d\t\t%ld\t%d\n", name, n, t, o);
+	//} 
 	fclose(fw);
 }
 
@@ -288,9 +300,18 @@ int file_merge_sort (int pr, int pb, int pr2, int pb2, FILE *fr, FILE *frt)
 		
 #if LIST == 1
 	int prev,
-		curr,
-		nexts,
+		curr = 0,
+		next,
 		z;
+	if (curr != k)
+		for (z=0; z<k; z++) {
+			fseek(frt,sizeof(int)*z,SEEK_SET);
+			fread(&var,sizeof(int),1,frt);
+			curr = ftell(frt);
+		}
+	if (curr == 0) { prev = 0; next = curr+1; }
+	else if (curr == n) { prev = curr-1; next = curr; }
+	else { prev = curr-1; next = curr+1; }	operations += z*4+6;
 #endif
 
 	fseek(frt,sizeof(int)*k,SEEK_SET);		operations += 1;
@@ -486,7 +507,8 @@ int main( int argc, char *argv[] )
 	char 	org_file[]	= "data.txt",
 			org_temp[]	= "data.temp",
 			org_bak[]	= "data.bak";
-			
+	
+	char pav[15];
 	//int r = 0; /* Veiksmu skaicius */
 /**
  *	Pradedam skaiciuot laika
@@ -504,6 +526,7 @@ int main( int argc, char *argv[] )
 	if (GO == "merge")
 	{
 		printf("\n\tMerge sort dalis\n\n");
+		//pav = "Merge sort";
 		
 		generate (n, z, A, org_file);		//Susigeneruojam duomenis
 		
@@ -536,9 +559,28 @@ int main( int argc, char *argv[] )
  *	Heap_sort'ingas
  **/
 	else if (GO == "heap")
-	{
-	
-	printf("\n\tHeap sort dalis\n\n");
+	{	
+		printf("\n\tHeap sort dalis\n\n");
+		//pav = "Heap sort";
+		
+		generate (n, z, A, org_file);		//Susigeneruojam duomenis
+			
+		system("cp data.txt data.temp");		//Pardiniu duomenu kopija
+		system("cp data.txt data.bak");			//Pardiniu duomenu kopija
+		
+		FILE *fr, *frt;
+		fr = fopen ( org_file,"rb+" );
+		if( fr == NULL ) {
+			printf("NO FILE!!!\n");
+			exit(1);
+		}
+		frt = fopen ( org_temp,"rb+" );
+		if( frt == NULL ) {
+			printf("NO FILE!!!\n");
+			exit(1);
+		}
+		
+		read_print_binary_file (org_file, n);
 	
 	//generate (n, z, A, "data.txt");
 	//system("cp data.txt temp");
@@ -570,8 +612,27 @@ int main( int argc, char *argv[] )
 	else if (GO == "bucket")
 	{
 	
-	printf("\n\tBucket sort dalis\n\n");
-	
+		printf("\n\tBucket sort dalis\n\n");
+		
+		generate (n, z, A, org_file);		//Susigeneruojam duomenis
+			
+		system("cp data.txt data.temp");		//Pardiniu duomenu kopija
+		system("cp data.txt data.bak");			//Pardiniu duomenu kopija
+		
+		FILE *fr, *frt;
+		fr = fopen ( org_file,"rb+" );
+		if( fr == NULL ) {
+			printf("NO FILE!!!\n");
+			exit(1);
+		}
+		frt = fopen ( org_temp,"rb+" );
+		if( frt == NULL ) {
+			printf("NO FILE!!!\n");
+			exit(1);
+		}
+		
+		read_print_binary_file (org_file, n);
+		
 	}
 	else if (GO == "generate&print")
 	{
@@ -591,6 +652,11 @@ int main( int argc, char *argv[] )
  *	Veikimo laikas	
  **/
 	printf("\n\tTime: %ld msec\n", endas-startas);
+	
+	time_t mytime;
+	mytime = time(NULL);
+	write_to_file2 ("log.txt", "Merge", n, endas-startas, operations);
+	//printf("%s\n", ctime(&mytime));
 
 /**
  *	Atminties atlaisvinimas
