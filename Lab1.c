@@ -19,7 +19,7 @@
 //*******************
 
 #define	LIST	0	// 0 - no list(array); 1 - yes;
-#define	MODE	1
+#define	MODE	3
 /* mode tipai
 	1 merge		|
 	2 heap		|	Sorting
@@ -118,7 +118,7 @@ void write_to_file (int number, int *W, char *fname)
 	fclose(fw);
 }
 
-void write_to_file2 (char *fname, char *name, int n, long t, int o)
+void write_line_to_file (char *fname, char *name, int n, long t, int o)
 {
 	
 	FILE *fw = fopen(fname, "a+");
@@ -179,6 +179,9 @@ void read_print_binary_file (char *file, int number)
 
 }
 
+//#############################################################
+//						MERGE SORT
+//#############################################################
 /**
  *	Surikiuoja ir sulieja du masyvus i viena
  *	*A - rodykle i (rikiuojama) masyva
@@ -488,6 +491,36 @@ int divide_file(int s, int n, FILE *fr, FILE *frt)
 	return 0;
 }
 
+//#############################################################
+//						HEAP SORT
+//#############################################################
+
+/*
+	TODO: SOME CODE HERE
+*/
+
+//#############################################################
+//						BUCKET SORT
+//#############################################################
+
+void bucket_sort (int *array, int n)
+{
+	int i, j;
+	int count[n];
+	for (i=0; i<n; i++) {
+		count[i]=0;
+	}
+	for (i=0; i<n; i++) {
+		(count[&array[i]])++;
+	}
+	for (i=0, j=0; i<n; i++) {
+		for(; count[i]>0; (count[i])--) {
+			&array[j++] = i;
+		}
+	}
+}
+
+//#############################################################
 
 /**
  *	main programos funkcija
@@ -508,12 +541,9 @@ int main( int argc, char *argv[] )
 			org_temp[]	= "data.temp",
 			org_bak[]	= "data.bak";
 	
-	char pav[15];
+	long startas, endas;
+	//char pav[15];
 	//int r = 0; /* Veiksmu skaicius */
-/**
- *	Pradedam skaiciuot laika
- **/
-	long startas = currentTick();
 	
 /**
  *	Veiksmai
@@ -532,6 +562,9 @@ int main( int argc, char *argv[] )
 		
 		system("cp data.txt data.temp");		//Pardiniu duomenu kopija
 		system("cp data.txt data.bak");			//Pardiniu duomenu kopija
+
+		printf("\tPries rikiavima\n");
+		read_print_binary_file (org_file, n);
 		
 		FILE *fr, *frt;
 		fr = fopen ( org_file,"rb+" );
@@ -544,16 +577,24 @@ int main( int argc, char *argv[] )
 			printf("NO FILE!!!\n");
 			exit(1);
 		}
-		
-		read_print_binary_file (org_file, n);
+	
+		/* Pradedam skaiciuot laika */
+		startas = currentTick();
 		
 		divide_file(0, n, fr, frt);/* pradedamas rikiavimas */
+		
+		/* Sustabdom laika */
+		endas = currentTick();
+		
 		fclose(fr);
-		
-		
+				
 		printf("\n\tPo rikiavimo\n");
 		read_print_binary_file (org_file, n);
+		
 		printf("\nVeiksmu skaicius: %d\n", operations);
+		
+		/* Log uzpildymas */
+		write_line_to_file ("log.txt", "Merge", n, endas-startas, operations);
 	}
 /**
  *	Heap_sort'ingas
@@ -619,6 +660,9 @@ int main( int argc, char *argv[] )
 		system("cp data.txt data.temp");		//Pardiniu duomenu kopija
 		system("cp data.txt data.bak");			//Pardiniu duomenu kopija
 		
+		printf("\tPries rikiavima\n");
+		read_print_binary_file (org_file, n);
+		
 		FILE *fr, *frt;
 		fr = fopen ( org_file,"rb+" );
 		if( fr == NULL ) {
@@ -631,32 +675,54 @@ int main( int argc, char *argv[] )
 			exit(1);
 		}
 		
+		/* Pradedam skaiciuot laika */
+		startas = currentTick();
+		
+		/* CODE MISSING */
+		bucket_sort (A, n);
+		
+		/* Sustabdom laika */
+		endas = currentTick();
+		
+		printf("\n\tPo rikiavimo\n");
 		read_print_binary_file (org_file, n);
+		
+		printf("\n\tSorting Time: %ld msec\n", endas-startas);
+		printf("\nOperations: %d\n", operations);
+		
+		/* Log uzpildymas */
+		write_line_to_file ("log.txt", "Bucket", n, endas-startas, operations);
 		
 	}
 	else if (GO == "generate&print")
 	{
 		printf("\n\tGenerate & print dalis\n\n");
 		
+		/* Pradedam skaiciuot laika */
+		startas = currentTick();
+		
 		generate (n, z, A, org_file);		//Susigeneruojam duomenis
+		
+		/* Sustabdom laika */
+		endas = currentTick();
+		
+		printf("\n\tGenerating Time: %ld msec\n", endas-startas);
+		
 		printf("\nSugeneruoti duomenys faile %s\n", org_file);
+		
+		/* Pradedam skaiciuot laika */
+		startas = currentTick();
+		
 		read_print_binary_file (org_file, n);
+		
+		/* Sustabdom laika */
+		endas = currentTick();
+		
+		printf("\n\tOutput Time: %ld msec\n", endas-startas);
 	}
 /**
  *	Veiksmu pabaiga
  **/
-	
-	/* Sustabdom laika */
-	long endas = currentTick();
-/**
- *	Veikimo laikas	
- **/
-	printf("\n\tTime: %ld msec\n", endas-startas);
-	
-	time_t mytime;
-	mytime = time(NULL);
-	write_to_file2 ("log.txt", "Merge", n, endas-startas, operations);
-	//printf("%s\n", ctime(&mytime));
 
 /**
  *	Atminties atlaisvinimas
